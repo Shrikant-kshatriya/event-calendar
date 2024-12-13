@@ -18,14 +18,6 @@ app.use(cors({
     allowedHeaders: ['Content-Type', 'Authorization'], 
 }));
 
-
-app.options('*', cors({
-    origin: ['http://localhost:5173', 'https://event-calendar-frontend-three.vercel.app'],
-    credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-    allowedHeaders: ['Content-Type', 'Authorization'],
-}));
-
 // Cookie and body parsers
 app.use(cookieParser());
 app.use(express.json());
