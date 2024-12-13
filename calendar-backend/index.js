@@ -8,15 +8,14 @@ const cookieParser = require('cookie-parser');
 
 const app = express();
 
-// connect to db
+// Connect to DB
 db();
 
-// Middleware for CORS
 app.use(cors({
-    origin: ['http://localhost:5173', 'https://event-calendar-frontend-three.vercel.app'],
+    origin: ['http://localhost:5173', 'https://event-calendar-frontend-three.vercel.app'], 
     credentials: true, 
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], 
-    allowedHeaders: ['Content-Type', 'Authorization'] 
+    allowedHeaders: ['Content-Type', 'Authorization'], 
 }));
 
 
@@ -27,14 +26,16 @@ app.options('*', cors({
     allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
+// Cookie and body parsers
 app.use(cookieParser());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-// routes
+// Routes
 app.use('/user', userRoutes);
 app.use('/events', eventRoutes);
 
+// Start server
 app.listen(4000, () => {
     console.log('Server is running on port', 4000);
-})
+});
