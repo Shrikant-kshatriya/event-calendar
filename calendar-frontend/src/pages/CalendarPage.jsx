@@ -39,6 +39,7 @@ const CalendarPage = () => {
         }
       } catch (err) {
         toast.error("Error fetching events.");
+        navigate("/login");
       }
     };
     useEffect(() => {
