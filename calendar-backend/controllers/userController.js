@@ -49,7 +49,7 @@ const createUser = async (req, res) => {
       .cookie("token", jwtToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "strict",
+        sameSite: "None",
         maxAge: 365 * 24 * 60 * 60 * 1000,
       })
       .status(200)
