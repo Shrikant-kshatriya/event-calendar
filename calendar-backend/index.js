@@ -13,9 +13,18 @@ db();
 
 // Middleware for CORS
 app.use(cors({
-    origin: '*',
+    origin: ['http://localhost:5173', 'https://event-calendar-frontend-three.vercel.app'],
+    credentials: true, 
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], 
+    allowedHeaders: ['Content-Type', 'Authorization'] 
+}));
+
+
+app.options('*', cors({
+    origin: ['http://localhost:5173', 'https://event-calendar-frontend-three.vercel.app'],
     credentials: true,
-    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE']   
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
 }));
 
 app.use(cookieParser());
