@@ -35,7 +35,6 @@ const AddEventForm = ({ addEvent, showForm, setShowForm }) => {
 
   return (
     <div className={showForm ? "add-event-wrapper active" : "add-event-wrapper"}>
-      <ToastContainer autoClose={3000} position="top-right"/>
       <div className="add-event-header">
         <div className="title">Add Event</div>
         <FaTimes className="close" onClick={e => setShowForm(false)}/>
