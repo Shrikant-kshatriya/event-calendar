@@ -5,6 +5,7 @@ const UserSchema = new mongoose.Schema({
   email: { type: String, required: true },
   name: { type: String, required: true },
   accessToken: { type: String, required: true },
+  watchData: { type: Object },
 });
 
 const User = mongoose.model("User", UserSchema);

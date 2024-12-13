@@ -14,23 +14,31 @@ const CalendarPage = () => {
   const [activeDay, setActiveDay] = useState(null);
   const [currentDate, setCurrentDate] = useState(new Date());
   const [showForm, setShowForm] = useState(false);
+  const [loading, setLoading] = useState(false); 
   const { user, setUser } = useContext(UserContext);
 
   const navigate = useNavigate();
 
   const fetchUser = async () => {
+    setLoading(true); 
     try {
       const userRes = await axios.get(`${import.meta.env.VITE_BASE_API_URL}/user`, {
         withCredentials: true,
       });
-
+  
       if (userRes.status === 200) {
         setUser(userRes.data.user);
+
+        await axios.post(
+          `${import.meta.env.VITE_BASE_API_URL}/events/watch`,
+          {},
+          { withCredentials: true }
+        );
 
         const eventsRes = await axios.get(`${import.meta.env.VITE_BASE_API_URL}/events`, {
           withCredentials: true,
         });
-
+  
         setEvents(eventsRes.data.events);
       } else {
         toast.error("Please Login!!");
@@ -39,9 +47,11 @@ const CalendarPage = () => {
     } catch (err) {
       toast.error("Error fetching events.");
       navigate("/login");
+    } finally {
+      setLoading(false); 
     }
   };
-
+  
   useEffect(() => {
     if (!user) {
       fetchUser();
@@ -56,22 +66,22 @@ const CalendarPage = () => {
 
     const selectedDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), activeDay);
 
-    selectedDate.setMinutes(selectedDate.getMinutes() + selectedDate.getTimezoneOffset() + 330); 
+    selectedDate.setMinutes(selectedDate.getMinutes() + selectedDate.getTimezoneOffset() + 330);
 
-    const utcDate = new Date(selectedDate.getTime() - (selectedDate.getTimezoneOffset() * 60000)); 
-  
-    const formattedDate = utcDate.toISOString().split('T')[0]; 
-  
+    const utcDate = new Date(selectedDate.getTime() - selectedDate.getTimezoneOffset() * 60000);
+
+    const formattedDate = utcDate.toISOString().split("T")[0];
+
     try {
       const response = await axios.post(
         `${import.meta.env.VITE_BASE_API_URL}/events`,
         {
           ...newEvent,
-          date: formattedDate, 
+          date: formattedDate,
         },
         { withCredentials: true }
       );
-  
+
       if (response.status === 201) {
         toast.success("Event added successfully!");
         fetchUser();
@@ -84,8 +94,7 @@ const CalendarPage = () => {
       toast.error("Failed to add event.");
     }
   };
-  
- 
+
   const deleteEvent = async (id) => {
     try {
       const response = await axios.delete(
@@ -105,7 +114,7 @@ const CalendarPage = () => {
     }
   };
 
-  return (
+ return (
     <div className="container">
       <div className="left">
         <div className="calendar">

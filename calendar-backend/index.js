@@ -12,7 +12,7 @@ const app = express();
 db();
 
 app.use(cors({
-    origin: ['*'], 
+    origin: ['https://event-calendar-frontend-three.vercel.app', 'http://localhost:5173'], 
     credentials: true, 
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], 
     allowedHeaders: ['Content-Type', 'Authorization'], 

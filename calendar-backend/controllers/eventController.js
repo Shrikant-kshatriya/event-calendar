@@ -135,8 +135,141 @@ const deleteGoogleCalendarEvent = async (req, res) => {
   }
 };
 
+const setupGoogleWatch = async (req, res) => {
+  try {
+    const decodedToken = jwt.verify(
+      req.cookies.token,
+      process.env.JWT_SECRET_KEY
+    );
+    const user = await User.findOne({ googleId: decodedToken.googleId });
+
+    if (!user || !user.accessToken) {
+      return res.status(401).json({ error: "Unauthorized. Invalid or expired token." });
+    }
+
+    const oauth2Client = new google.auth.OAuth2();
+    oauth2Client.setCredentials({ access_token: user.accessToken });
+
+    const calendar = google.calendar({ version: "v3", auth: oauth2Client });
+
+    const watchResponse = await calendar.events.watch({
+      calendarId: "primary",
+      requestBody: {
+        id: `watch-${user.googleId}-${Date.now()}`,
+        type: "web_hook",
+        address: `${process.env.WEBHOOK_URL}/events/notifications`, 
+      },
+    });
+
+    user.watchData = watchResponse.data;
+    await user.save();
+
+    res.status(200).json({ message: "Google Watch setup successfully", watchData: watchResponse.data });
+  } catch (err) {
+    console.error("Error setting up Google Watch:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+const stopGoogleWatch = async (req, res) => {
+  try {
+    const decodedToken = jwt.verify(
+      req.cookies.token,
+      process.env.JWT_SECRET_KEY
+    );
+    const user = await User.findOne({ googleId: decodedToken.googleId });
+
+    if (!user || !user.watchData) {
+      return res.status(400).json({ error: "No active watch found for user." });
+    }
+
+    const oauth2Client = new google.auth.OAuth2();
+    oauth2Client.setCredentials({ access_token: user.accessToken });
+
+    const calendar = google.calendar({ version: "v3", auth: oauth2Client });
+
+    await calendar.channels.stop({
+      requestBody: {
+        id: user.watchData.id,
+        resourceId: user.watchData.resourceId,
+      },
+    });
+
+    user.watchData = null;
+    await user.save();
+
+    res.status(200).json({ message: "Google Watch stopped successfully" });
+  } catch (err) {
+    console.error("Error stopping Google Watch:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+const handleGoogleNotifications = async (req, res) => {
+  try {
+    const channelId = req.headers["x-goog-channel-id"];
+    const resourceId = req.headers["x-goog-resource-id"];
+
+    const user = await User.findOne({ "watchData.id": channelId });
+
+    if (!user) {
+      console.error("User not found for channel ID:", channelId);
+      return res.status(404).json({ error: "User not found for notification" });
+    }
+
+    if (user.watchData.resourceId !== resourceId) {
+      console.error("Resource ID mismatch:", { channelId, resourceId });
+      return res.status(400).json({ error: "Resource ID mismatch" });
+    }
+
+    const oauth2Client = new google.auth.OAuth2();
+    oauth2Client.setCredentials({ access_token: user.accessToken });
+
+    const calendar = google.calendar({ version: "v3", auth: oauth2Client });
+
+    const eventsResponse = await calendar.events.list({
+      calendarId: "primary",
+      timeMin: new Date().toISOString(), 
+      singleEvents: true,
+      orderBy: "startTime",
+    });
+
+    const updatedEvents = eventsResponse.data.items || [];
+
+    for (const event of updatedEvents) {
+      const existingEvent = await Event.findOne({ googleEventId: event.id });
+
+      if (existingEvent) {
+        existingEvent.name = event.summary;
+        existingEvent.startDate = event.start.dateTime || event.start.date;
+        existingEvent.endDate = event.end.dateTime || event.end.date;
+        await existingEvent.save();
+      } else {
+        const newEvent = new Event({
+          userId: user._id,
+          googleEventId: event.id,
+          name: event.summary,
+          startDate: event.start.dateTime || event.start.date,
+          endDate: event.end.dateTime || event.end.date,
+        });
+        await newEvent.save();
+      }
+    }
+
+    res.status(200).send("Notification handled successfully");
+  } catch (err) {
+    console.error("Error handling Google notification:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+
+
 module.exports = {
   createGoogleCalendarEvent,
   getGoogleCalendarEvents,
   deleteGoogleCalendarEvent,
+  setupGoogleWatch,
+  stopGoogleWatch,
+  handleGoogleNotifications,
 };
