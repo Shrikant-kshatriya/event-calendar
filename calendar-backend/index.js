@@ -12,7 +12,7 @@ const app = express();
 db();
 
 app.use(cors({
-    origin: ['http://localhost:5173', 'https://event-calendar-frontend-three.vercel.app'], 
+    origin: ['*'], 
     credentials: true, 
     methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'], 
     allowedHeaders: ['Content-Type', 'Authorization'], 
@@ -24,12 +24,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
 // Routes
-app.use('/user', userRoutes);
-app.use('/events', eventRoutes);
-
 app.get('/', (req, res) => {
     res.send('Hello, World!');
 })
+app.use('/user', userRoutes);
+app.use('/events', eventRoutes);
+
 
 // Start server
 app.listen(4000, () => {
