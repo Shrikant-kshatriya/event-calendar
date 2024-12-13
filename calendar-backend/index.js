@@ -27,6 +27,10 @@ app.use(express.urlencoded({ extended: true }));
 app.use('/user', userRoutes);
 app.use('/events', eventRoutes);
 
+app.get('/', (req, res) => {
+    res.send('Hello, World!');
+})
+
 // Start server
 app.listen(4000, () => {
     console.log('Server is running on port', 4000);
