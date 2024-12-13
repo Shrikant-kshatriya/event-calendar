@@ -29,6 +29,7 @@ const createUser = async (req, res) => {
     let user = await User.findOne({ googleId });
 
     if (!user) {
+
       user = new User({
         googleId,
         email,
@@ -48,9 +49,9 @@ const createUser = async (req, res) => {
     res
       .cookie("token", jwtToken, {
         httpOnly: true,
-        secure: process.env.NODE_ENV === "production",
-        sameSite: "None",
-        maxAge: 365 * 24 * 60 * 60 * 1000,
+        secure: process.env.NODE_ENV === "production", 
+        sameSite: "None", 
+        maxAge: 365 * 24 * 60 * 60 * 1000, 
       })
       .status(200)
       .json({ message: "User logged in successfully", user });
@@ -61,23 +62,24 @@ const createUser = async (req, res) => {
 };
 
 const getUser = async (req, res) => {
-    const token = req.cookies.token;
-    if (!token) {
+  const token = req.cookies.token;
+  if (!token) {
+    return res.status(401).json({ error: "Unauthorized" });
+  }
+
+  try {
+    const decodedToken = jwt.verify(token, process.env.JWT_SECRET_KEY);
+
+    const user = await User.findOne({ googleId: decodedToken.googleId });
+    if (!user) {
       return res.status(401).json({ error: "Unauthorized" });
     }
-  
-    try {
-      const decodedToken = jwt.verify(token, process.env.JWT_SECRET_KEY);
-      const user = await User.findOne({ googleId: decodedToken.googleId });
-      if (!user) {
-        return res.status(401).json({ error: "Unauthorized" });
-      }
-      res.status(200).json({ user });
-    } catch (err) {
-      console.error("Error retrieving user:", err);
-      res.status(500).json({ error: "Internal Server Error" });
-    }
-  };
-  
+
+    res.status(200).json({ user });
+  } catch (err) {
+    console.error("Error retrieving user:", err);
+    res.status(500).json({ error: "Internal Server Error" });
+  }
+};
 
 module.exports = { createUser, getUser };
